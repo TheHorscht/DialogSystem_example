@@ -1,0 +1,23 @@
+<Entity>
+
+  <SpriteComponent
+    image_file="data/debug/circle_16.png"
+    offset_x="8"
+    offset_y="8"
+    >
+  </SpriteComponent>
+
+  <InteractableComponent
+    ui_text="FUCK you!"
+    >
+  </InteractableComponent>
+
+  <LuaComponent
+    script_interacting="mods/DialogSystem/files/interact.lua"
+    script_source_file="mods/DialogSystem/files/interact.lua"
+    execute_every_n_frame="1"
+    execute_on_added="1"
+    >
+  </LuaComponent>
+
+</Entity>
