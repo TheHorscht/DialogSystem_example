@@ -10,7 +10,7 @@ function interacting(entity_who_interacted, entity_interacted, interactable_name
     {
       image = "mods/DialogSystem/files/portrait.png",
       align_image = dialog_system.LEFT,
-      message = "Hello, how are you?"
+      message = "Hey, you! Yes, YOU!\nWould you like to buy some... *DRUGS*?"
     },
     {
       image = "mods/DialogSystem/files/portrait2.png",

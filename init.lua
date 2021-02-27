@@ -4,7 +4,7 @@ local nxml = dofile_once("mods/DialogSystem/lib/nxml.lua")
 local filename = "mods/DialogSystem/files/transition.xml"
 local content = ModTextFileGetContent(filename)
 local xml = nxml.parse(content)
-for i = 1, 32 do
+for i = 0, 32 do
   xml:add_child(nxml.parse(string.format([[
     <RectAnimation
       frame_count="1"
@@ -17,7 +17,7 @@ for i = 1, 32 do
       pos_y="%d"
       >
     </RectAnimation>
-  ]], i, i * 4)))
+  ]], 32 - i, 64 * 2 - i * 4)))
 end
 print(tostring(xml))
 ModTextFileSetContent(filename, tostring(xml))
