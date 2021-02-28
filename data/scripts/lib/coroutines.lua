@@ -1,155 +1,108 @@
--- coroutine runtime ---------------------------------------------------------
--- FIXME: stolen from https://github.com/ecbambrick/UntitledGame/tree/master/src/lib
+local current_time = 0
 
+local last_id = 0
 
--- This file implements wait, wait_signal, signal, and their supporting stuff.
+local coroutines_by_id = {}
+local ids_by_coroutine = {}
 
--- This table is indexed by coroutine and simply contains the time at which the coroutine
--- should be woken up.
-local WAITING_ON_TIME = {}
+local coroutine_lists_by_signal = {}
 
--- This table is indexed by signal and contains list of coroutines that are waiting
--- on a given signal
-local WAITING_ON_SIGNAL = {}
-local WAITING_ON_SIGNAL_CALLBACK = {}
+local waiting_coroutines = {}
 
--- Keep track of how long the game has been running.
-local CURRENT_TIME = 0
+local function resume_unprot(c)
+    local ok, err = coroutine.resume(c)
+    if not ok then
+        local id = ids_by_coroutine[c]
+        error("error in coroutine with ID " .. tostring(id) .. ": " .. tostring(err))
+    end
+end
 
-function wait(frames)
-    -- Grab a reference to the current running coroutine
-    local co = coroutine.running()
+local function alloc_id(co)
+    last_id = last_id + 1
 
-    -- If co is nil, that means we're on the main process, which isn't a coroutine and can't yield
-    assert(co ~= nil, "The main thread cannot wait!")
+    while coroutines_by_id[last_id] ~= nil do
+        last_id = last_id + 1
+    end
 
-    -- Store the coroutine and its wakeup time in the WAITING_ON_TIME table
-    local wakeupTime = CURRENT_TIME + frames
-    WAITING_ON_TIME[co] = wakeupTime
+    return last_id
+end
 
-    -- And suspend the process
-    return coroutine.yield(co)
+local function get_coroutine(id)
+    local c = coroutines_by_id[id]
+    if not c then error("coroutine with ID " .. tostring(id) .. " doesn't exist, or has completed its execution") end
+    return c
+end
+
+function async(f)
+    local c = coroutine.create(f)
+    resume_unprot(c)
+
+    local id = alloc_id(c)
+    coroutines_by_id[id] = c
+    ids_by_coroutine[c] = id
+
+    return id
+end
+
+local async = async
+function async_loop(f)
+    return async(function()
+        while true do
+            f()
+        end
+    end)
+end
+
+function wait(frames, id)
+    local c = id and get_coroutine(id) or coroutine.running()
+    if not c then error("cannot wait in the main thread") end
+
+    waiting_coroutines[c] = current_time + (frames or 0)
+    coroutine.yield()
+end
+
+function cancel(id)
+    local c = get_coroutine(id)
+
+    if not waiting_coroutines[c] then return false end
+    waiting_coroutines[c] = nil
+    return true
+end
+
+function resume(id)
+    local c = get_coroutine(id)
+
+    if not waiting_coroutines[c] then return false end
+    waiting_coroutines[c] = nil
+    resume_unprot(c)
+    return true
 end
 
 function wake_up_waiting_threads(frames_delta)
-    -- this function should be called once per game logic update with the amount of time
-    -- that has passed since it was last called
-    CURRENT_TIME = CURRENT_TIME + frames_delta
+    current_time = current_time + frames_delta
 
-    local threadsToWake = {}
-    for co, wakeupTime in pairs(WAITING_ON_TIME) do
-        if wakeupTime < CURRENT_TIME then
-            table.insert(threadsToWake, co)
-        end
-    end
+    for c, target_time in pairs(waiting_coroutines) do
+        if target_time < current_time then
+            waiting_coroutines[c] = nil
+            -- note: this is fine as per `next()` documentation:
+            -- The behavior of next is undefined if, during the
+            -- traversal, you assign any value to a non-existent field in
+            -- the table.
+            
+            local ok, err = coroutine.resume(c)
 
-    for _, co in ipairs(threadsToWake) do
-        WAITING_ON_TIME[co] = nil -- setting a field to nil removes it from the table
-        coroutine.resume(co)
-    end
-end
+            local id
 
-function wait_signal(signalName)
-    -- Same check as in wait; the main thread cannot wait
-    local co = coroutine.running()
-    assert(co ~= nil, "The main thread cannot wait!")
+            if not waiting_coroutines[c] then
+                id = id or ids_by_coroutine[c]
+                ids_by_coroutine[c] = nil
+                coroutines_by_id[id] = nil
+            end
 
-    if WAITING_ON_SIGNAL[signalName] == nil then
-        -- If there wasn't already a list for this signal, start a new one.
-        WAITING_ON_SIGNAL[signalName] = { co }
-    else
-        table.insert(WAITING_ON_SIGNAL[signalName], co)
-    end
-
-    return coroutine.yield()
-end
-
-function wait_signal_callback(signalName, callback)
-    -- Same check as in wait; the main thread cannot wait
-    local co = coroutine.running()
-    assert(co ~= nil, "The main thread cannot wait!")
-
-    if WAITING_ON_SIGNAL[signalName] == nil then
-        -- If there wasn't already a list for this signal, start a new one.
-        WAITING_ON_SIGNAL[signalName] = { co }
-    else
-        table.insert(WAITING_ON_SIGNAL[signalName], co)
-    end
-	
-	if WAITING_ON_SIGNAL_CALLBACK[signalName] == nil then
-        -- If there wasn't already a list for this signal, start a new one.
-        WAITING_ON_SIGNAL_CALLBACK[signalName] = { callback }
-    else
-        table.insert(WAITING_ON_SIGNAL_CALLBACK[signalName], callback)
-    end
-
-    return coroutine.yield()
-end
-
-function signal(signalName)
-    local threads = WAITING_ON_SIGNAL[signalName]
-    if threads == nil then return end
-
-	-- call the callback
-    local funcs = WAITING_ON_SIGNAL_CALLBACK[signalName]
-    if funcs ~= nil then
-        WAITING_ON_SIGNAL_CALLBACK[signalName] = nil
-		for _, func in ipairs(funcs) do
-			func()
-		end
-	end
-	
-	-- resume the coroutine
-    WAITING_ON_SIGNAL[signalName] = nil
-    for _, co in ipairs(threads) do
-        coroutine.resume(co)
-    end
-end
-
-function signal_2params(signalName, a, b)
-    local threads = WAITING_ON_SIGNAL[signalName]
-    if threads == nil then return end
-
-	-- call the callback
-    local funcs = WAITING_ON_SIGNAL_CALLBACK[signalName]
-    if funcs ~= nil then
-        WAITING_ON_SIGNAL_CALLBACK[signalName] = nil
-		for _, func in ipairs(funcs) do
-			func()
-		end
-	end
-	
-	-- resume the coroutine
-    WAITING_ON_SIGNAL[signalName] = nil
-    for _, co in ipairs(threads) do
-        coroutine.resume(co, a, b)
-    end
-end
-
-
-function async(func)
-    -- This function is just a quick wrapper to start a coroutine.
-    local prot_func = function ()
-      local success, err = pcall(func)
-      if not success then
-        print("async error:" .. tostring(err))
-      end
-    end
-    local co = coroutine.create(prot_func)
-    return coroutine.resume(co)
-end
-
-function async_loop(func)
-    -- This function is just a quick wrapper to start a coroutine.
-    local func_loop = function()
-        while true do
-            local success, err = pcall(func)
-            if not success then
-              print("async_loop error:" .. tostring(err))
+            if not ok then
+                id = id or ids_by_coroutine[c]
+                error("error in waiting coroutine with ID " .. tostring(id) .. ": " .. tostring(err))
             end
         end
     end
-
-    local co = coroutine.create(func_loop)
-    return coroutine.resume(co)
 end

@@ -8,7 +8,7 @@
   </SpriteComponent>
 
   <InteractableComponent
-    ui_text="FUCK you!"
+    ui_text="Press $0 to talk to NPC"
     >
   </InteractableComponent>
 
