@@ -14,10 +14,10 @@ function dash(entity, force)
   cooldown_frames_left = 120
 end
  
-
+ 
 if left_pressed and cooldown_frames_left < 0 then
   if last_frame_left_pressed ~= nil and (current_frame - last_frame_left_pressed < 30) then
-    dash(player, -400)
+    dash(player, -500)
     last_frame_left_pressed = nil
   else
     last_frame_left_pressed = current_frame
@@ -26,7 +26,7 @@ end
  
 if right_pressed and cooldown_frames_left < 0 then
   if last_frame_right_pressed ~= nil and (current_frame - last_frame_right_pressed < 30) then
-    dash(player, 400)
+    dash(player, 500)
     last_frame_right_pressed = nil
   else
     last_frame_right_pressed = current_frame

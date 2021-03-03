@@ -2,6 +2,7 @@ dofile_once("data/scripts/lib/coroutines.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 local Color = dofile_once("mods/DialogSystem/lib/color.lua")
 
+local dialog_box_y = 50
 local dialog_box_width = 300
 local dialog_box_height = 70
 local line_height = 10
@@ -21,6 +22,7 @@ local routines = {}
 dialog_system.open_dialog = function(messages)
   local dialog = {
     transition_state = 0,
+    fade_in_portrait = 33,
     messages = messages,
     lines = {{}},
   }
@@ -28,18 +30,42 @@ dialog_system.open_dialog = function(messages)
   dialog.show = function(message)
     dialog.messages = { message }
     dialog.lines = {{}}
+    dialog.current_line = dialog.lines[1]
+    dialog.show_options = false
+    routines.logic.restart()
+    -- routines.logic = nil
+  end
+
+  local render_gui = true
+
+  dialog.close = function()
+    dialog.lines = {{}}
+    dialog.current_line = dialog.lines[1]
+    dialog.show_options = false
+    async(function()
+      while dialog.fade_in_portrait < 33 do
+        dialog.fade_in_portrait = dialog.fade_in_portrait + 1
+        wait(0)
+      end
+      while dialog.transition_state > 0 do
+        dialog.transition_state = dialog.transition_state - (1 / 32)
+        wait(0)
+      end
+      render_gui = false
+    end)
   end
 
   -- "Kill" currently running routines
   for k, v in pairs(routines) do
     -- WAITING_ON_TIME[v] = nil
     -- routines[k] = nil
-    cancel(v)
+    print("Trying to cancel: " .. tostring(k) .. " - " ..  tostring(v))
+    v.stop()
   end
 
   -- local lines = {{}}
   -- local current_line = lines[1]
-  local render_gui = true
+
   -- Render the GUI
   routines.gui = async(function()
     while render_gui do
@@ -47,13 +73,15 @@ dialog_system.open_dialog = function(messages)
       local screen_width, screen_height = GuiGetScreenDimensions(gui)
       local width = dialog.transition_state * dialog_box_width
       local height = dialog.transition_state * dialog_box_height
-      local x, y = screen_width/2 - width/2, screen_height - 100 - height/2
-      y = y + (height/2) - (64/2)
+      local x, y = screen_width/2 - width/2, screen_height - height/2
+      -- x and y are the center of the dialog box and will be used to draw text and portaits etc
+      y = y - dialog_box_height / 2 + 3 - dialog_box_y
+      -- y = y + (height/2) - (64/2) + dialog_box_y
       x = x + 3
       GuiIdPushString(gui, "dialog_box")
       GuiZSetForNextWidget(gui, 2)
-      GuiImageNinePiece(gui, 1, screen_width/2 - width/2, screen_height - 100 - height/2, width, height)
-      if dialog.fade_in_portrait then
+      GuiImageNinePiece(gui, 1, screen_width/2 - width/2, screen_height - dialog_box_y - dialog_box_height/2 - height/2, width, height)
+      if dialog.fade_in_portrait < 33 then
         GuiZSetForNextWidget(gui, 1)
         GuiImage(gui, 2, x, y, "mods/DialogSystem/files/portrait.png", 1, 1, 1, 0)
         GuiZSetForNextWidget(gui, 0)
@@ -65,7 +93,7 @@ dialog_system.open_dialog = function(messages)
       local y_offset = 0
       local char_i = 1
       for i, line in ipairs(dialog.lines) do
-        GuiLayoutBeginHorizontal(gui, x + 72, y, true)
+        GuiLayoutBeginHorizontal(gui, x + 72, y - 1, true)
         for i2, char_data in ipairs(line) do
           local wave_offset_y = 0
           if char_data.wave then
@@ -85,35 +113,49 @@ dialog_system.open_dialog = function(messages)
         y_offset = y_offset + line_height
       end
       -- /Text
-      for i, v in ipairs(dialog.show_options and messages[1].options or {}) do
-        if GuiButton(gui, 5 + i, x + 72, y + i * line_height + 30, "[ " .. v.text .. " ]") then
-          v.func(dialog)
+      -- Dialog options
+      if dialog.show_options then
+        if dialog.messages[1].options then
+          local num_options = #dialog.messages[1].options
+          for i, v in ipairs(dialog.messages[1].options) do
+            if GuiButton(gui, 5 + i, x + 70, y + dialog_box_height - (num_options - i + 1) * line_height - 7, "[ " .. v.text .. " ]") then
+              v.func(dialog)
+            end
+          end
+        else
+          if GuiButton(gui, 6, x + 70, y + dialog_box_height - line_height - 7, "[ End ]") then
+            dialog.close()
+          end
         end
       end
+      -- /Dialog options
       GuiIdPop(gui)
       wait(0)
     end
   end)
+
   -- Advance the state logic etc
   routines.logic = async(function()
-    for i=1, 32 do
+    while dialog.transition_state < 1 do
+    -- for i=1, 32 do
       dialog.transition_state = dialog.transition_state + (1 / 32)
       wait(0)
     end
-    dialog.fade_in_portrait = 32
-    for i=32, 1, -1 do
+    dialog.transition_state = 1
+    -- for i=32, 1, -1 do
+    while dialog.fade_in_portrait > 0 do
       dialog.fade_in_portrait = dialog.fade_in_portrait - 1
       wait(1)
     end
-
-    -- wait_or_abort(1, false)
+    dialog.fade_in_portrait = 0
+    
 
     local wave, blink = false, false
     local delay = 3
     local i = 1
 
-    while i <= #messages[1].message do
-      local char = messages[1].message:sub(i, i)
+    while i <= #dialog.messages[1].message do
+      local char = dialog.messages[1].message:sub(i, i)
       if char == "\n" then
         table.insert(dialog.lines, {})
         dialog.current_line = dialog.lines[#dialog.lines]
@@ -124,7 +166,7 @@ dialog_system.open_dialog = function(messages)
       elseif char == "{" then
         -- local command, param1 = string.gmatch("hello{@delay 5}", "@(%w+)%s+(%d)")()
         -- Look ahead 20 characters and get that substring
-        local str = messages[1].message:sub(i, i + 20)
+        local str = dialog.messages[1].message:sub(i, i + 20)
         local command, param1 = string.gmatch(str, "@(%w+)%s+(%d+)")()
         if command then
           if command == "delay" then
@@ -142,6 +184,9 @@ dialog_system.open_dialog = function(messages)
     end
     wait(30)
     dialog.show_options = true
+
+
+
   end)
 end
 

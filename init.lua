@@ -23,10 +23,14 @@ print(tostring(xml))
 ModTextFileSetContent(filename, tostring(xml))
 
 function OnPlayerSpawned(player_entity)
-  EntityAddComponent2(player_entity, "LuaComponent", {
-    script_source_file="mods/DialogSystem/files/dash.lua",
-    execute_every_n_frame=1,
-  })
+  if not GameHasFlagRun("dashmod_script_applied") then
+    GameAddFlagRun("dashmod_script_applied")
+  -- if GlobalsGetValue("dashmod_script_applied", "0") == "0" then
+    EntityAddComponent2(player_entity, "LuaComponent", {
+      script_source_file="mods/DialogSystem/files/dash.lua",
+      execute_every_n_frame=1,
+    })
+  end
 
   local x, y = EntityGetTransform(player_entity)
   EntityLoad("mods/DialogSystem/files/npc.xml", x, y)
