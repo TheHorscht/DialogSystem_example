@@ -7,22 +7,25 @@ local dialog_box_width = 300
 local dialog_box_height = 70
 local line_height = 10
 
--- local dialog = {}
-
 dialog_system = {
   LEFT = 1,
   RIGHT = 2,
 }
 
+-- DEBUG_SKIP_ANIMATIONS = true
+
 gui = GuiCreate()
--- dialog = nil
 
 local routines = {}
 
 dialog_system.open_dialog = function(messages)
+  for i, msg in ipairs(messages) do
+    -- msg.text = msg.text:gsub("^%s*", "")
+    msg.text = msg.text:gsub("^%s*", ""):gsub("\n%s*", "\n"):gsub("%s*(?:\n)", "")
+  end
   local dialog = {
     transition_state = 0,
-    fade_in_portrait = 33,
+    fade_in_portrait = -1,
     messages = messages,
     lines = {{}},
   }
@@ -33,7 +36,6 @@ dialog_system.open_dialog = function(messages)
     dialog.current_line = dialog.lines[1]
     dialog.show_options = false
     routines.logic.restart()
-    -- routines.logic = nil
   end
 
   local render_gui = true
@@ -43,8 +45,8 @@ dialog_system.open_dialog = function(messages)
     dialog.current_line = dialog.lines[1]
     dialog.show_options = false
     async(function()
-      while dialog.fade_in_portrait < 33 do
-        dialog.fade_in_portrait = dialog.fade_in_portrait + 1
+      while dialog.fade_in_portrait > -1 do
+        dialog.fade_in_portrait = dialog.fade_in_portrait - 1
         wait(0)
       end
       while dialog.transition_state > 0 do
@@ -81,9 +83,11 @@ dialog_system.open_dialog = function(messages)
       GuiIdPushString(gui, "dialog_box")
       GuiZSetForNextWidget(gui, 2)
       GuiImageNinePiece(gui, 1, screen_width/2 - width/2, screen_height - dialog_box_y - dialog_box_height/2 - height/2, width, height)
-      if dialog.fade_in_portrait < 33 then
+      if dialog.fade_in_portrait > -1 then
         GuiZSetForNextWidget(gui, 1)
-        GuiImage(gui, 2, x, y, "mods/DialogSystem/files/portrait.png", 1, 1, 1, 0)
+        -- GuiImage( gui:obj, id:int, x:number, y:number, sprite_filename:string, alpha:number = 1, scale:number = 1, scale_y:number = 0, rotation:number = 0, rect_animation_playback_type:int = GUI_RECT_ANIMATION_PLAYBACK.PlayToEndAndHide, rect_animation_name:string = "" ) ['scale' will be used for 'scale_y' if 'scale_y' equals 0.]
+        GuiImage(gui, 2, x, y, "mods/DialogSystem/files/morshu.xml", 1, 1, 1, 0, GUI_RECT_ANIMATION_PLAYBACK.Loop, "morshu")
+        -- GuiImage(gui, 2, x, y, "mods/DialogSystem/files/portrait.png", 1, 1, 1, 0)
         GuiZSetForNextWidget(gui, 0)
         GuiImage(gui, 3, x, y, "mods/DialogSystem/files/transition.xml", 1, 1, 1, 0, GUI_RECT_ANIMATION_PLAYBACK.PlayToEndAndPause, "anim_" .. tostring(dialog.fade_in_portrait))
         GuiZSetForNextWidget(gui, -1)
@@ -96,17 +100,34 @@ dialog_system.open_dialog = function(messages)
         GuiLayoutBeginHorizontal(gui, x + 72, y - 1, true)
         for i2, char_data in ipairs(line) do
           local wave_offset_y = 0
+          local shake_offset = { x = 0, y = 0 }
+
+          local r, g, b, a = unpack(char_data.color)
+          local absolute_position = false
+
+          if char_data.shake then
+            shake_offset.x = (1 - math.random() * 2) * 0.5
+            shake_offset.y = (1 - math.random() * 2) * 0.5
+            -- Draw an invisible version of the text just so we can get the location where it would be drawn normally
+            GuiColorSetForNextWidget(gui, 1, 1, 1, 0.001) --  0 alpha doesn't work, is bug
+            GuiText(gui, -2, y_offset + wave_offset_y, char_data.char)
+            local _, _, _, x, y, _ ,_ , draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+            shake_offset.x = shake_offset.x + x
+            shake_offset.y = shake_offset.y + y
+            GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NoLayouting)
+            absolute_position = true
+          end
           if char_data.wave then
             local color = Color:new(math.cos(char_i * 0.14 + GameGetFrameNum() * 0.03) * 360, 0.5, 0.5)
-            local r, g, b = color:get_rgb()
-            GuiColorSetForNextWidget(gui, r, g, b, 1)
+            r, g, b = color:get_rgb()
+            -- GuiColorSetForNextWidget(gui, r, g, b, 1)
             wave_offset_y = math.sin(char_i * 0.5 + GameGetFrameNum() * 0.1) * 1
           end
           if char_data.blink then
-            local l = math.sin(GameGetFrameNum() * 0.15) *  0.3 + 0.7
-            GuiColorSetForNextWidget(gui, l, l, l, 1)
+            a = math.sin(GameGetFrameNum() * 0.2) *  0.3 + 0.7
           end
-          GuiText(gui, -2, y_offset + wave_offset_y, char_data.char)
+          GuiColorSetForNextWidget(gui, r, g, b, a)
+          GuiText(gui, (absolute_position and 0 or -2) + shake_offset.x, (absolute_position and 0 or y_offset) + wave_offset_y + shake_offset.y, char_data.char)
           char_i = char_i + 1
         end
         GuiLayoutEnd(gui)
@@ -136,6 +157,10 @@ dialog_system.open_dialog = function(messages)
 
   -- Advance the state logic etc
   routines.logic = async(function()
+    if DEBUG_SKIP_ANIMATIONS then
+      dialog.transition_state = 1
+      dialog.fade_in_portrait = 32
+    end
     while dialog.transition_state < 1 do
     -- for i=1, 32 do
       dialog.transition_state = dialog.transition_state + (1 / 32)
@@ -143,19 +168,20 @@ dialog_system.open_dialog = function(messages)
     end
     dialog.transition_state = 1
     -- for i=32, 1, -1 do
-    while dialog.fade_in_portrait > 0 do
-      dialog.fade_in_portrait = dialog.fade_in_portrait - 1
+    while dialog.fade_in_portrait < 32 do
+      dialog.fade_in_portrait = dialog.fade_in_portrait + 1
       wait(1)
     end
-    dialog.fade_in_portrait = 0
+    dialog.fade_in_portrait = 32
     
 
-    local wave, blink = false, false
+    local color = { 1, 1, 1, 1 }
+    local wave, blink, shake = false, false, false
     local delay = 3
     local i = 1
-
-    while i <= #dialog.messages[1].message do
-      local char = dialog.messages[1].message:sub(i, i)
+    
+    while i <= #dialog.messages[1].text do
+      local char = dialog.messages[1].text:sub(i, i)
       if char == "\n" then
         table.insert(dialog.lines, {})
         dialog.current_line = dialog.lines[#dialog.lines]
@@ -163,24 +189,45 @@ dialog_system.open_dialog = function(messages)
         wave = not wave
       elseif char == "*" then
         blink = not blink
+      elseif char == "#" then
+        shake = not shake
       elseif char == "{" then
         -- local command, param1 = string.gmatch("hello{@delay 5}", "@(%w+)%s+(%d)")()
         -- Look ahead 20 characters and get that substring
-        local str = dialog.messages[1].message:sub(i, i + 20)
-        local command, param1 = string.gmatch(str, "@(%w+)%s+(%d+)")()
+        local str = dialog.messages[1].text:sub(i, i + 20)
+        local command, param1 = string.gmatch(str, "@(%w+)%s+([^}]+)")()
         if command then
           if command == "delay" then
             delay = tonumber(param1)
           elseif command == "pause" then
             wait(tonumber(param1))
+          elseif command == "color" then
+            local rgb = tonumber(param1, 16)
+            color[1] = bit.band(bit.rshift(rgb, 16), 0xFF) / 255
+            color[2] = bit.band(bit.rshift(rgb, 8), 0xFF) / 255
+            color[3] = bit.band(rgb, 0xFF) / 255
           end
           i = i + string.find(str, "}") - 1
         end
       else
-        table.insert(dialog.current_line, { char = char, wave = wave, blink = blink })
+        local color_copy = {unpack(color)}
+        table.insert(dialog.current_line, { char = char, wave = wave, blink = blink, shake = shake, color = color_copy })
+        if char ~= " " and frame_last_played_sound ~= GameGetFrameNum() then
+          frame_last_played_sound = GameGetFrameNum()
+          local cx, cy = GameGetCameraPos()
+          -- GamePlaySound("mods/DialogSystem/audio/dialog_system.bank", "talking_sounds/" .. GlobalsGetValue("sound", "sans"), GameGetCameraPos())
+          local pan = GameGetFrameNum() % 120 < 60 and -1 or 1
+          -- local add = pan < 0 and "_2" or ""
+          -- local add = ""
+          -- GamePrint(add)
+          GamePlaySound("mods/DialogSystem/audio/dialog_system.bank", "talking_sounds/" .. GlobalsGetValue("sound", "sans"), cx - 400 * pan, cy)
+          -- GamePlaySound("mods/DialogSystem/audio/dialog_system.bank", "snd_mod/create", GameGetCameraPos())
+        end
       end
       i = i + 1
-      wait(delay)
+      if delay > 0 then
+        wait(delay)
+      end
     end
     wait(30)
     dialog.show_options = true
