@@ -60,7 +60,8 @@ function OnPlayerSpawned(player_entity)
   end
 
   local x, y = EntityGetTransform(player_entity)
-  EntityLoad("mods/DialogSystem/files/npc.xml", x, y - 30)
+  EntityLoad("mods/DialogSystem/files/npc.xml", x, y - 50)
+  EntityLoad("mods/DialogSystem/files/npc2.xml", x-20, y - 50)
   -- dialog_system.open_dialog({
   --   {
   --     image = "mods/DialogSystem/files/portrait.png",

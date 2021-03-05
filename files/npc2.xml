@@ -29,14 +29,20 @@
 			>
 		</DamageModelComponent>
 
-    <SpriteComponent
+<SpriteComponent
+	image_file="data/debug/circle_16.png"
+	offset_x="8"
+	offset_y="8"
+	>
+</SpriteComponent>
+    <!-- <SpriteComponent
       image_file="mods/DialogSystem/files/morshu_sprite.xml"
       offset_x="14"
       offset_y="26"
       z_index="1"
       rect_animation="walk"
       >
-    </SpriteComponent>
+    </SpriteComponent> -->
 
 		<PathFindingGridMarkerComponent
 			marker_work_flag="24" >
@@ -103,7 +109,7 @@
 
   <InteractableComponent
     ui_text="Press $0 to talk to Morshu"
-    radius="15"
+		radius="15"
     >
   </InteractableComponent>
 

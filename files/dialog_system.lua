@@ -6,10 +6,12 @@ local dialog_box_y = 50
 local dialog_box_width = 300
 local dialog_box_height = 70
 local line_height = 10
+local distance_to_close = 15
 
 dialog_system = {
   LEFT = 1,
   RIGHT = 2,
+  images = { ruby = "mods/DialogSystem/files/ruby.png" }
 }
 
 -- DEBUG_SKIP_ANIMATIONS = true
@@ -18,32 +20,53 @@ gui = GuiCreate()
 
 local routines = {}
 
-dialog_system.open_dialog = function(messages)
-  for i, msg in ipairs(messages) do
-    -- msg.text = msg.text:gsub("^%s*", "")
-    msg.text = msg.text:gsub("^%s*", ""):gsub("\n%s*", "\n"):gsub("%s*(?:\n)", "")
-  end
+dialog_system.open_dialog = function(message)
+  -- Remove whitespace before and after every line
+  -- for i, msg in ipairs(messages) do
+    message.text = message.text:gsub("^%s*", ""):gsub("\n%s*", "\n"):gsub("%s*(?:\n)", "")
+  -- end
+  
+  local entity_id = GetUpdatedEntityID()
+  local x, y = EntityGetTransform(entity_id)
+
   local dialog = {
     transition_state = 0,
     fade_in_portrait = -1,
-    messages = messages,
+    message = message,
     lines = {{}},
+    opened_at_position = { x = x, y = y },
+    is_open = true,
   }
   dialog.current_line = dialog.lines[1]
   dialog.show = function(message)
-    dialog.messages = { message }
+    dialog.message = message
     dialog.lines = {{}}
     dialog.current_line = dialog.lines[1]
     dialog.show_options = false
     routines.logic.restart()
   end
 
-  local render_gui = true
+  dialog.is_too_far = function()
+    local player = EntityGetWithTag("player_unit")[1]
+    local px, py = EntityGetTransform(player)
+    local function get_distance( x1, y1, x2, y2 )
+      local result = math.sqrt( ( x2 - x1 ) ^ 2 + ( y2 - y1 ) ^ 2 )
+      return result
+    end
+    
+    return get_distance(dialog.opened_at_position.x, dialog.opened_at_position.y, px, py) > distance_to_close
+  end
 
   dialog.close = function()
+    if dialog.closing then return end
+    if routines.logic then
+      routines.logic.stop()
+    end
+    dialog.closing = true
     dialog.lines = {{}}
     dialog.current_line = dialog.lines[1]
     dialog.show_options = false
+    GamePrint("closing dialog")
     async(function()
       while dialog.fade_in_portrait > -1 do
         dialog.fade_in_portrait = dialog.fade_in_portrait - 1
@@ -53,7 +76,7 @@ dialog_system.open_dialog = function(messages)
         dialog.transition_state = dialog.transition_state - (1 / 32)
         wait(0)
       end
-      render_gui = false
+      dialog.is_open = false
     end)
   end
 
@@ -70,7 +93,10 @@ dialog_system.open_dialog = function(messages)
 
   -- Render the GUI
   routines.gui = async(function()
-    while render_gui do
+    while dialog.is_open do
+      if dialog.is_too_far() then
+        dialog.close()
+      end
       GuiStartFrame(gui)
       local screen_width, screen_height = GuiGetScreenDimensions(gui)
       local width = dialog.transition_state * dialog_box_width
@@ -106,8 +132,8 @@ dialog_system.open_dialog = function(messages)
           local absolute_position = false
 
           if char_data.shake then
-            shake_offset.x = (1 - math.random() * 2) * 0.5
-            shake_offset.y = (1 - math.random() * 2) * 0.5
+            shake_offset.x = (1 - math.random() * 2) * 0.7
+            shake_offset.y = (1 - math.random() * 2) * 0.7
             -- Draw an invisible version of the text just so we can get the location where it would be drawn normally
             GuiColorSetForNextWidget(gui, 1, 1, 1, 0.001) --  0 alpha doesn't work, is bug
             GuiText(gui, -2, y_offset + wave_offset_y, char_data.char)
@@ -136,9 +162,9 @@ dialog_system.open_dialog = function(messages)
       -- /Text
       -- Dialog options
       if dialog.show_options then
-        if dialog.messages[1].options then
-          local num_options = #dialog.messages[1].options
-          for i, v in ipairs(dialog.messages[1].options) do
+        if dialog.message.options then
+          local num_options = #dialog.message.options
+          for i, v in ipairs(dialog.message.options) do
             if GuiButton(gui, 5 + i, x + 70, y + dialog_box_height - (num_options - i + 1) * line_height - 7, "[ " .. v.text .. " ]") then
               v.func(dialog)
             end
@@ -180,8 +206,8 @@ dialog_system.open_dialog = function(messages)
     local delay = 3
     local i = 1
     
-    while i <= #dialog.messages[1].text do
-      local char = dialog.messages[1].text:sub(i, i)
+    while i <= #dialog.message.text do
+      local char = dialog.message.text:sub(i, i)
       if char == "\n" then
         table.insert(dialog.lines, {})
         dialog.current_line = dialog.lines[#dialog.lines]
@@ -194,7 +220,7 @@ dialog_system.open_dialog = function(messages)
       elseif char == "{" then
         -- local command, param1 = string.gmatch("hello{@delay 5}", "@(%w+)%s+(%d)")()
         -- Look ahead 20 characters and get that substring
-        local str = dialog.messages[1].text:sub(i, i + 20)
+        local str = dialog.message.text:sub(i, i + 20)
         local command, param1 = string.gmatch(str, "@(%w+)%s+([^}]+)")()
         if command then
           if command == "delay" then
@@ -235,6 +261,7 @@ dialog_system.open_dialog = function(messages)
 
 
   end)
+  return dialog
 end
 
 
