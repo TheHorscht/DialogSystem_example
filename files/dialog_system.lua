@@ -14,7 +14,7 @@ dialog_system = {
   images = { ruby = "mods/DialogSystem/files/ruby.png" }
 }
 
--- DEBUG_SKIP_ANIMATIONS = true
+DEBUG_SKIP_ANIMATIONS = true
 
 gui = GuiCreate()
 
@@ -128,20 +128,28 @@ dialog_system.open_dialog = function(message)
           local wave_offset_y = 0
           local shake_offset = { x = 0, y = 0 }
 
-          local r, g, b, a = unpack(char_data.color)
+          local r, g, b, a = unpack(char_data.color and char_data.color or { 1, 1, 1, 1 })
           local absolute_position = false
 
           if char_data.shake then
             shake_offset.x = (1 - math.random() * 2) * 0.7
             shake_offset.y = (1 - math.random() * 2) * 0.7
             -- Draw an invisible version of the text just so we can get the location where it would be drawn normally
-            GuiColorSetForNextWidget(gui, 1, 1, 1, 0.001) --  0 alpha doesn't work, is bug
-            GuiText(gui, -2, y_offset + wave_offset_y, char_data.char)
-            local _, _, _, x, y, _ ,_ , draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+            local x, y = 0, 0
+            if char_data.img then
+              GuiImage(gui, i2, -3, (i-1) * line_height + wave_offset_y, dialog_system.images[char_data.img], 0, 1, 1)
+              _, _, _, x, y, _ ,_ , draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+              -- To shift the next thing that gets drawn 2 pixels left
+              GuiText(gui, -2, 0, "")
+            else
+              GuiColorSetForNextWidget(gui, 1, 1, 1, 0.001) --  0 alpha doesn't work, is bug
+              GuiText(gui, -2, y_offset + wave_offset_y, char_data.char)
+              _, _, _, x, y, _ ,_ , draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
+            end
             shake_offset.x = shake_offset.x + x
             shake_offset.y = shake_offset.y + y
-            GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NoLayouting)
             absolute_position = true
+            GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NoLayouting)
           end
           if char_data.wave then
             local color = Color:new(math.cos(char_i * 0.14 + GameGetFrameNum() * 0.03) * 360, 0.5, 0.5)
@@ -152,8 +160,16 @@ dialog_system.open_dialog = function(message)
           if char_data.blink then
             a = math.sin(GameGetFrameNum() * 0.2) *  0.3 + 0.7
           end
-          GuiColorSetForNextWidget(gui, r, g, b, a)
-          GuiText(gui, (absolute_position and 0 or -2) + shake_offset.x, (absolute_position and 0 or y_offset) + wave_offset_y + shake_offset.y, char_data.char)
+          if char_data.img then
+            GuiColorSetForNextWidget(gui, r, g, b, a)
+            GuiImage(gui, i2, (absolute_position and 0 or -3) + shake_offset.x, (absolute_position and 0 or y_offset) + wave_offset_y + shake_offset.y, dialog_system.images[char_data.img], a, 1, 1)
+            if not absolute_position then
+              GuiText(gui, -2, 0, "")
+            end
+          else
+            GuiColorSetForNextWidget(gui, r, g, b, a)
+            GuiText(gui, (absolute_position and 0 or -2) + shake_offset.x, (absolute_position and 0 or y_offset) + wave_offset_y + shake_offset.y, char_data.char)
+          end
           char_i = char_i + 1
         end
         GuiLayoutEnd(gui)
@@ -232,6 +248,8 @@ dialog_system.open_dialog = function(message)
             color[1] = bit.band(bit.rshift(rgb, 16), 0xFF) / 255
             color[2] = bit.band(bit.rshift(rgb, 8), 0xFF) / 255
             color[3] = bit.band(rgb, 0xFF) / 255
+          elseif command == "img" then
+            table.insert(dialog.current_line, { wave = wave, blink = blink, shake = shake, img = param1 })
           end
           i = i + string.find(str, "}") - 1
         end
