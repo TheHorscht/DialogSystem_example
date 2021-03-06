@@ -83,7 +83,6 @@ function wake_up_waiting_threads(frames_delta)
   -- Only call this function once per frame per lua context
   if last_frame_woken == GameGetFrameNum() then return end
   last_frame_woken = GameGetFrameNum()
-  GamePrint("woken")
   current_time = current_time + frames_delta
   
   for c, target_time in pairs(waiting_coroutines) do

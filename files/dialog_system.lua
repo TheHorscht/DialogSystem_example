@@ -14,7 +14,7 @@ dialog_system = {
   images = { ruby = "mods/DialogSystem/files/ruby.png" }
 }
 
-DEBUG_SKIP_ANIMATIONS = true
+-- DEBUG_SKIP_ANIMATIONS = true
 
 gui = GuiCreate()
 
@@ -224,6 +224,8 @@ dialog_system.open_dialog = function(message)
     
     while i <= #dialog.message.text do
       local char = dialog.message.text:sub(i, i)
+      local play_sound = false
+      local do_wait = false
       if char == "\n" then
         table.insert(dialog.lines, {})
         dialog.current_line = dialog.lines[#dialog.lines]
@@ -250,30 +252,30 @@ dialog_system.open_dialog = function(message)
             color[3] = bit.band(rgb, 0xFF) / 255
           elseif command == "img" then
             table.insert(dialog.current_line, { wave = wave, blink = blink, shake = shake, img = param1 })
+            play_sound = true
+            do_wait = true
           end
           i = i + string.find(str, "}") - 1
         end
       else
         local color_copy = {unpack(color)}
         table.insert(dialog.current_line, { char = char, wave = wave, blink = blink, shake = shake, color = color_copy })
-        if char ~= " " and frame_last_played_sound ~= GameGetFrameNum() then
-          frame_last_played_sound = GameGetFrameNum()
-          local cx, cy = GameGetCameraPos()
-          -- GamePlaySound("mods/DialogSystem/audio/dialog_system.bank", "talking_sounds/" .. GlobalsGetValue("sound", "sans"), GameGetCameraPos())
-          local pan = GameGetFrameNum() % 120 < 60 and -1 or 1
-          -- local add = pan < 0 and "_2" or ""
-          -- local add = ""
-          -- GamePrint(add)
-          GamePlaySound("mods/DialogSystem/audio/dialog_system.bank", "talking_sounds/" .. GlobalsGetValue("sound", "sans"), cx - 400 * pan, cy)
-          -- GamePlaySound("mods/DialogSystem/audio/dialog_system.bank", "snd_mod/create", GameGetCameraPos())
+        if char ~= " " then
+          play_sound = true
         end
+        do_wait = true
+      end
+      if play_sound and frame_last_played_sound ~= GameGetFrameNum() then
+        frame_last_played_sound = GameGetFrameNum()
+        GamePlaySound("mods/DialogSystem/audio/dialog_system.bank", "talking_sounds/" .. GlobalsGetValue("sound", "sans"), 0, 0)
       end
       i = i + 1
-      if delay > 0 then
+      if do_wait and delay > 0 then
+        GamePrint("waiting")
         wait(delay)
       end
     end
-    wait(30)
+    wait(15)
     dialog.show_options = true
 
 

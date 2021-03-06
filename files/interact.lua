@@ -1,7 +1,7 @@
 dofile_once("data/scripts/lib/coroutines.lua")
 dofile_once("mods/DialogSystem/files/dialog_system.lua")
 
-wake_up_waiting_threads(1)
+-- wake_up_waiting_threads(1)
 
 -- dialog = dialog or {}
 local entity_id = GetUpdatedEntityID()
@@ -36,12 +36,15 @@ function interacting(entity_who_interacted, entity_interacted, interactable_name
     --   {@img ruby}~rubies~{@img ruby} {@delay 2}Lamp oil? {@pause 30}Rope? {@pause 30}#Bombs#? {@pause 30}You want it?{@pause 30}
     --   It's yours my friend, {@pause 10}as long as you have enough {@img ruby}~rubies~{@img ruby}.
     -- ]]
+    -- text = [[
+    --   {@img ruby} RUBIES {@img ruby}
+    --   *{@img ruby} RUBIES {@img ruby}*
+    --        #{@img ruby} RUBIES {@img ruby}#
+    --             ~{@img ruby} RUBIES {@img ruby}~
+    --             *#~{@img ruby} RUBIES {@img ruby}~#*
+    -- ]]
     text = [[
-      {@img ruby} RUBIES {@img ruby}
-      *{@img ruby} RUBIES {@img ruby}*
-           #{@img ruby} RUBIES {@img ruby}#
-                ~{@img ruby} RUBIES {@img ruby}~
-                *#~{@img ruby} RUBIES {@img ruby}~#*
+      {@delay 30}Test {@delay 30}{@delay 30}Test
     ]]
   })
 end
