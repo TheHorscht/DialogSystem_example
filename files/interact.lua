@@ -1,6 +1,7 @@
 dofile_once("mods/DialogSystem/lib/DialogSystem/dialog_system.lua")
 local config = dofile_once("data/virtual/DialogSystem_config.lua")
 
+-- Make NPC stop walking while player is close
 local entity_id = GetUpdatedEntityID()
 local x, y = EntityGetTransform(entity_id)
 local player = EntityGetInRadiusWithTag(x, y, config.distance_to_close, "player_unit")[1]
@@ -27,9 +28,8 @@ function interacting(entity_who_interacted, entity_interacted, interactable_name
         text = "Option one",
         func = function(dialog)
           dialog.show({
-            portrait = "mods/DialogSystem/files/morshu.xml",
-            animation = "morshu",
-            text = "Blablabla some more text... but with the default typing sound."
+            portrait = "mods/DialogSystem/files/portrait.png",
+            text = "Now I am a wizerd!\nBlablabla some more text... but with default typing sound."
           })
           -- dialog.close() to close it
         end

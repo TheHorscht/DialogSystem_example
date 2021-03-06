@@ -98,7 +98,7 @@ dialog_system.open_dialog = function(message)
       GuiImageNinePiece(gui, 1, screen_width/2 - width/2, screen_height - config.dialog_box_y - config.dialog_box_height/2 - height/2, width, height)
       if dialog.fade_in_portrait > -1 then
         GuiZSetForNextWidget(gui, 1)
-        GuiImage(gui, 2, x, y, message.portrait, 1, 1, 1, 0, GUI_RECT_ANIMATION_PLAYBACK.Loop, message.animation or "")
+        GuiImage(gui, 2, x, y, dialog.message.portrait, 1, 1, 1, 0, GUI_RECT_ANIMATION_PLAYBACK.Loop, message.animation or "")
         GuiZSetForNextWidget(gui, 0)
         GuiImage(gui, 3, x, y, "%PATH%transition.xml", 1, 1, 1, 0, GUI_RECT_ANIMATION_PLAYBACK.PlayToEndAndPause, "anim_" .. tostring(dialog.fade_in_portrait))
         GuiZSetForNextWidget(gui, -1)
