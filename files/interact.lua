@@ -1,50 +1,42 @@
-dofile_once("data/scripts/lib/coroutines.lua")
-dofile_once("mods/DialogSystem/files/dialog_system.lua")
+dofile_once("mods/DialogSystem/lib/DialogSystem/dialog_system.lua")
+local config = dofile_once("data/virtual/DialogSystem_config.lua")
 
--- wake_up_waiting_threads(1)
-
--- dialog = dialog or {}
 local entity_id = GetUpdatedEntityID()
 local x, y = EntityGetTransform(entity_id)
-local player = EntityGetInRadiusWithTag(x, y, 15, "player_unit")[1]
+local player = EntityGetInRadiusWithTag(x, y, config.distance_to_close, "player_unit")[1]
 local character_platforming_component = EntityGetFirstComponentIncludingDisabled(entity_id, "CharacterPlatformingComponent")
 if player then
-  -- GamePrint("Player detected")
   ComponentSetValue2(character_platforming_component, "run_velocity", 0)
 else
   ComponentSetValue2(character_platforming_component, "run_velocity", 30)
-  -- if dialog[entity_id] then
-  --   dialog[entity_id].close()
-  -- end
-  -- if dialog and dialog.is_too_far() then
-  --   dialog.close()
-  -- end
 end
 
-local sounds = { "sans", "one", "two", "three", "four" }
-
 function interacting(entity_who_interacted, entity_interacted, interactable_name)
-  local sound_index = tonumber(GlobalsGetValue("sound_index", "1"))
-  GlobalsSetValue("sound_index", sound_index % #sounds + 1)
-  GamePrint("Current sound: " .. tostring(sounds[sound_index]))
-  GlobalsSetValue("sound", sounds[sound_index])
-  -- GlobalsSetValue("sound", "two")
   dialog = dialog_system.open_dialog({
-    image = "mods/DialogSystem/files/portrait.png",
-    align_image = dialog_system.LEFT,
-    -- text = [[
-    --   {@img ruby}~rubies~{@img ruby} {@delay 2}Lamp oil? {@pause 30}Rope? {@pause 30}#Bombs#? {@pause 30}You want it?{@pause 30}
-    --   It's yours my friend, {@pause 10}as long as you have enough {@img ruby}~rubies~{@img ruby}.
-    -- ]]
-    -- text = [[
-    --   {@img ruby} RUBIES {@img ruby}
-    --   *{@img ruby} RUBIES {@img ruby}*
-    --        #{@img ruby} RUBIES {@img ruby}#
-    --             ~{@img ruby} RUBIES {@img ruby}~
-    --             *#~{@img ruby} RUBIES {@img ruby}~#*
-    -- ]]
+    portrait = "mods/DialogSystem/files/morshu.xml",
+    animation = "morshu", -- Which animation to use
+    typing_sound = "sans", -- There are currently 5: sans, one, two, three, four and "none" to turn it off, if not specified defaults to two
     text = [[
-      {@delay 30}Test {@delay 30}{@delay 30}Test
-    ]]
+      Normal text, pause for 60 frames: {@pause 60}{@delay 10}Slow text{@delay 3}{@color FF0000} text color{@color FFFFFF}
+      *Blinking text*, #shaking text#, ~rainbow wave text~, ~*#combined#*~
+      You can even use custom icons/images! {@img ruby}{@img ruby}{@img ruby}
+      Which also support all modifiers: #{@img ruby}#*{@img ruby}*~{@img ruby}~~*#{@img ruby}#*~
+    ]],
+    options = {
+      {
+        text = "Option one",
+        func = function(dialog)
+          dialog.show({
+            portrait = "mods/DialogSystem/files/morshu.xml",
+            animation = "morshu",
+            text = "Blablabla some more text... but with the default typing sound."
+          })
+          -- dialog.close() to close it
+        end
+      },
+      {
+        text = "An option without a 'func' property closes the dialog",
+      },
+    }
   })
 end

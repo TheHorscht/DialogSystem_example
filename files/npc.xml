@@ -85,22 +85,6 @@
 		</CameraBoundComponent>
 	</Base>
 
-
-
-
-
-
-
-
-
-  <!-- <SpriteComponent
-    image_file="mods/DialogSystem/files/morshu_sprite.xml"
-    offset_x="0"
-    offset_y="0"
-    rect_animation="walk"
-    >
-  </SpriteComponent> -->
-
   <InteractableComponent
     ui_text="Press $0 to talk to Morshu"
     radius="15"
@@ -112,7 +96,6 @@
     script_source_file="mods/DialogSystem/files/interact.lua"
     execute_every_n_frame="1"
     enable_coroutines="1"
-    execute_on_added="1"
     >
   </LuaComponent>
 
