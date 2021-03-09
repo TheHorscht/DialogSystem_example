@@ -1,10 +1,9 @@
 dofile_once("mods/DialogSystem/lib/DialogSystem/dialog_system.lua")
-local config = dofile_once("data/virtual/DialogSystem_config.lua")
 
 -- Make NPC stop walking while player is close
 local entity_id = GetUpdatedEntityID()
 local x, y = EntityGetTransform(entity_id)
-local player = EntityGetInRadiusWithTag(x, y, config.distance_to_close, "player_unit")[1]
+local player = EntityGetInRadiusWithTag(x, y, 15, "player_unit")[1]
 local character_platforming_component = EntityGetFirstComponentIncludingDisabled(entity_id, "CharacterPlatformingComponent")
 if player then
   ComponentSetValue2(character_platforming_component, "run_velocity", 0)
@@ -13,6 +12,11 @@ else
 end
 
 function interacting(entity_who_interacted, entity_interacted, interactable_name)
+  dialog_system.images.ruby = "mods/DialogSystem/files/ruby.png" -- This is how you add custom icons to be used by the img command
+  -- dialog_system.dialog_box_y = 50 -- Optional
+  -- dialog_system.dialog_box_width = 300 -- Optional
+  -- dialog_system.dialog_box_height = 70 -- Optional
+  -- dialog_system.distance_to_close = 15 -- Optional
   dialog = dialog_system.open_dialog({
     portrait = "mods/DialogSystem/files/morshu.xml",
     animation = "morshu", -- Which animation to use

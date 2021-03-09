@@ -3,12 +3,17 @@
 
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("%PATH%coroutines.lua")
-local config = dofile_once("data/virtual/DialogSystem_config.lua")
 local Color = dofile_once("%PATH%color.lua")
 
 local line_height = 10
 
-dialog_system = {}
+dialog_system = {
+  images = {},
+  dialog_box_y = 50, -- Optional
+  dialog_box_width = 300,
+  dialog_box_height = 70,
+  distance_to_close = 15,
+}
 
 -- DEBUG_SKIP_ANIMATIONS = true
 
@@ -49,7 +54,7 @@ dialog_system.open_dialog = function(message)
       return result
     end
     
-    return get_distance(dialog.opened_at_position.x, dialog.opened_at_position.y, px, py) > config.distance_to_close
+    return get_distance(dialog.opened_at_position.x, dialog.opened_at_position.y, px, py) > dialog_system.distance_to_close
   end
 
   dialog.close = function()
@@ -87,15 +92,15 @@ dialog_system.open_dialog = function(message)
       end
       GuiStartFrame(gui)
       local screen_width, screen_height = GuiGetScreenDimensions(gui)
-      local width = dialog.transition_state * config.dialog_box_width
-      local height = dialog.transition_state * config.dialog_box_height
+      local width = dialog.transition_state * dialog_system.dialog_box_width
+      local height = dialog.transition_state * dialog_system.dialog_box_height
       local x, y = screen_width/2 - width/2, screen_height - height/2
       -- x and y are the center of the dialog box and will be used to draw text and portaits etc
-      y = y - config.dialog_box_height / 2 + 3 - config.dialog_box_y
+      y = y - dialog_system.dialog_box_height / 2 + 3 - dialog_system.dialog_box_y
       x = x + 3
       GuiIdPushString(gui, "dialog_box")
       GuiZSetForNextWidget(gui, 2)
-      GuiImageNinePiece(gui, 1, screen_width/2 - width/2, screen_height - config.dialog_box_y - config.dialog_box_height/2 - height/2, width, height)
+      GuiImageNinePiece(gui, 1, screen_width/2 - width/2, screen_height - dialog_system.dialog_box_y - dialog_system.dialog_box_height/2 - height/2, width, height)
       if dialog.fade_in_portrait > -1 then
         GuiZSetForNextWidget(gui, 1)
         GuiImage(gui, 2, x, y, dialog.message.portrait, 1, 1, 1, 0, GUI_RECT_ANIMATION_PLAYBACK.Loop, message.animation or "")
@@ -121,7 +126,7 @@ dialog_system.open_dialog = function(message)
             -- Draw an invisible version of the text just so we can get the location where it would be drawn normally
             local x, y = 0, 0
             if char_data.img then
-              GuiImage(gui, i2, -3, (i-1) * line_height + wave_offset_y, config.images[char_data.img], 0, 1, 1)
+              GuiImage(gui, i2, -3, (i-1) * line_height + wave_offset_y, dialog_system.images[char_data.img], 0, 1, 1)
               _, _, _, x, y, _ ,_ , draw_x, draw_y = GuiGetPreviousWidgetInfo(gui)
               -- To shift the next thing that gets drawn 2 pixels left
               GuiText(gui, -2, 0, "")
@@ -145,7 +150,7 @@ dialog_system.open_dialog = function(message)
           end
           if char_data.img then
             GuiColorSetForNextWidget(gui, r, g, b, a)
-            GuiImage(gui, i2, (absolute_position and 0 or -3) + shake_offset.x, (absolute_position and 0 or y_offset) + wave_offset_y + shake_offset.y, config.images[char_data.img], a, 1, 1)
+            GuiImage(gui, i2, (absolute_position and 0 or -3) + shake_offset.x, (absolute_position and 0 or y_offset) + wave_offset_y + shake_offset.y, dialog_system.images[char_data.img], a, 1, 1)
             if not absolute_position then
               GuiText(gui, -2, 0, "")
             end
@@ -164,7 +169,7 @@ dialog_system.open_dialog = function(message)
         if dialog.message.options then
           local num_options = #dialog.message.options
           for i, v in ipairs(dialog.message.options) do
-            if GuiButton(gui, 5 + i, x + 70, y + config.dialog_box_height - (num_options - i + 1) * line_height - 7, "[ " .. v.text .. " ]") then
+            if GuiButton(gui, 5 + i, x + 70, y + dialog_system.dialog_box_height - (num_options - i + 1) * line_height - 7, "[ " .. v.text .. " ]") then
               if v.func then
                 v.func(dialog)
               else
@@ -173,7 +178,7 @@ dialog_system.open_dialog = function(message)
             end
           end
         else
-          if GuiButton(gui, 6, x + 70, y + config.dialog_box_height - line_height - 7, "[ End ]") then
+          if GuiButton(gui, 6, x + 70, y + dialog_system.dialog_box_height - line_height - 7, "[ End ]") then
             dialog.close()
           end
         end

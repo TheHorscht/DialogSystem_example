@@ -1,6 +1,4 @@
-dofile_once("mods/DialogSystem/lib/DialogSystem/init.lua")("DialogSystem/lib/DialogSystem", {
-  ruby = "mods/DialogSystem/files/ruby.png" -- This is how you add custom icons to be used
-})
+dofile_once("mods/DialogSystem/lib/DialogSystem/init.lua")("mods/DialogSystem/lib/DialogSystem")
 
 function OnPlayerSpawned(player_entity)
   local x, y = EntityGetTransform(player_entity)
