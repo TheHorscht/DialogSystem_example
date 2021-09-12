@@ -19,7 +19,7 @@ function interacting(entity_who_interacted, entity_interacted, interactable_name
   -- dialog_system.distance_to_close = 15 -- Optional
   dialog = dialog_system.open_dialog({
     name = "Morshu",
-    portrait = "mods/DialogSystem/files/morshu.xml",
+    portrait = "mods/DialogSystem/files/morshu/portrait.xml",
     animation = "morshu", -- Which animation to use
     typing_sound = "sans", -- There are currently 5: sans, one, two, three, four and "none" to turn it off, if not specified defaults to two
     text = [[

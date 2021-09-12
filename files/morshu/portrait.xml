@@ -1,5 +1,5 @@
 <Sprite 
-	filename="mods/DialogSystem/files/morshu.png"
+	filename="mods/DialogSystem/files/morshu/portrait.png"
 	offset_x="0"
 	offset_y="0"
 	default_animation="morshu"

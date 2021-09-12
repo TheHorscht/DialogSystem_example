@@ -30,7 +30,7 @@
 		</DamageModelComponent>
 
     <SpriteComponent
-      image_file="mods/DialogSystem/files/morshu_sprite.xml"
+      image_file="mods/DialogSystem/files/morshu/sprite.xml"
       offset_x="14"
       offset_y="26"
       z_index="1"
@@ -92,8 +92,8 @@
   </InteractableComponent>
 
   <LuaComponent
-    script_interacting="mods/DialogSystem/files/interact.lua"
-    script_source_file="mods/DialogSystem/files/interact.lua"
+    script_interacting="mods/DialogSystem/files/morshu/interact.lua"
+    script_source_file="mods/DialogSystem/files/morshu/interact.lua"
     execute_every_n_frame="1"
     enable_coroutines="1"
     >
