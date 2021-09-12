@@ -1,11 +1,7 @@
 <Entity>
-
-
-
 	<Base file="data/entities/base_helpless_animal.xml" >
-
-        <AnimalAIComponent 
-        	preferred_job="JobDefault"
+		<AnimalAIComponent 
+			preferred_job="JobDefault"
 			attack_melee_enabled="0"
 			attack_ranged_entity_file=""
 			attack_ranged_predict="1"
@@ -19,8 +15,8 @@
       max_distance_to_move_from_home="300"
 			can_fly="0"
       can_walk="1"
-            >
-        </AnimalAIComponent >
+			>
+		</AnimalAIComponent >
 		
 		<DamageModelComponent 
 			ragdoll_filenames_file="data/ragdolls/peasant/filenames.txt" 
@@ -30,7 +26,7 @@
 		</DamageModelComponent>
 
     <SpriteComponent
-      image_file="mods/DialogSystem/files/morshu/sprite.xml"
+      image_file="mods/DialogSystem_example/files/morshu/sprite.xml"
       offset_x="14"
       offset_y="26"
       z_index="1"
@@ -64,9 +60,9 @@
 		</HitboxComponent>
 		
 		<PathFindingComponent
-		    can_swim_on_surface="1"
-		    can_dive="1"
-        can_walk="1"
+			can_swim_on_surface="1"
+			can_dive="1"
+			can_walk="1"
 			>
 		</PathFindingComponent>
 		
@@ -92,8 +88,8 @@
   </InteractableComponent>
 
   <LuaComponent
-    script_interacting="mods/DialogSystem/files/morshu/interact.lua"
-    script_source_file="mods/DialogSystem/files/morshu/interact.lua"
+    script_interacting="mods/DialogSystem_example/files/morshu/interact.lua"
+    script_source_file="mods/DialogSystem_example/files/morshu/interact.lua"
     execute_every_n_frame="1"
     enable_coroutines="1"
     >
