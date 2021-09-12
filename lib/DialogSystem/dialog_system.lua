@@ -38,7 +38,16 @@ dialog_system.open_dialog = function(message)
   }
   dialog.current_line = dialog.lines[1]
   dialog.show = function(message)
+    local previous_message_name = dialog.message.name
+    local previous_message_portrait = dialog.message.portrait
+    local previous_message_animation = dialog.message.animation
+    local previous_message_portrait = dialog.message.portrait
+    local previous_message_typing_sound = dialog.message.typing_sound
     dialog.message = message
+    dialog.message.name = message.name or previous_message_name
+    dialog.message.portrait = message.portrait or previous_message_portrait
+    dialog.message.animation = message.animation or previous_message_animation
+    dialog.message.typing_sound = message.typing_sound or previous_message_typing_sound
     dialog.lines = {{}}
     dialog.current_line = dialog.lines[1]
     dialog.show_options = false
@@ -48,6 +57,9 @@ dialog_system.open_dialog = function(message)
   -- Returns a boolean indicating whether the player is too far from the position the dialog was opened at
   dialog.is_too_far = function()
     local player = EntityGetWithTag("player_unit")[1]
+    if not player then
+      return true
+    end
     local px, py = EntityGetTransform(player)
     local function get_distance( x1, y1, x2, y2 )
       local result = math.sqrt( ( x2 - x1 ) ^ 2 + ( y2 - y1 ) ^ 2 )
@@ -72,7 +84,7 @@ dialog_system.open_dialog = function(message)
         wait(0)
       end
       while dialog.transition_state > 0 do
-        dialog.transition_state = dialog.transition_state - (1 / 32)
+        dialog.transition_state = dialog.transition_state - (2 / 32)
         wait(0)
       end
       dialog.is_open = false
@@ -108,6 +120,37 @@ dialog_system.open_dialog = function(message)
         GuiImage(gui, 3, x, y, "%PATH%transition.xml", 1, 1, 1, 0, GUI_RECT_ANIMATION_PLAYBACK.PlayToEndAndPause, "anim_" .. tostring(dialog.fade_in_portrait))
         GuiZSetForNextWidget(gui, -1)
         GuiImage(gui, 4, x, y, "%PATH%border.png", 1, 1, 1, 0)
+        -- -----------------
+        -- Name plate with autobox
+        -- -----------------
+        -- GuiImageNinePiece(gui, 5, screen_width/2, screen_height - dialog_system.dialog_box_y - height - 40, 100, 40)
+        -- GuiBeginAutoBox(gui)
+        -- -- GuiEndAutoBoxNinePiece( gui:obj, margin:number = 5, size_min_x:number = 0, size_min_y:number = 0, mirrorize_over_x_axis:bool = false, x_axis:number = 0, sprite_filename:string = "data/ui_gfx/decorations/9piece0_gray.png", sprite_highlight_filename:string = "data/ui_gfx/decorations/9piece0_gray.png" )
+        -- GuiText(gui, screen_width/2 - width/2 + 2, screen_height - dialog_system.dialog_box_y - height - 16, "Morshu")
+        -- GuiZSetForNextWidget(gui, 1)
+        -- GuiEndAutoBoxNinePiece(gui, 2)
+
+        -- -----------------
+        -- Name plate left side
+        -- -----------------
+        -- local name_width, name_height = GuiGetTextDimensions(gui, "Morshu")
+        -- GuiZSetForNextWidget(gui, 2)
+        -- GuiImageNinePiece(gui, 5, screen_width/2 - width/2, screen_height - dialog_system.dialog_box_y - height - 14, name_width + 7, name_height)
+        -- GuiText(gui, screen_width/2 - width/2 + 4, screen_height - dialog_system.dialog_box_y - height - 14, "Morshu")
+
+        -- -----------------
+        -- Name plate left side
+        -- -----------------
+        if dialog.message.name and dialog.message.name ~= "" then
+          local nameplate_padding = 2
+          local nameplate_inner_width = 70
+          local nameplate_height = 11
+          local name_width, name_height = GuiGetTextDimensions(gui, dialog.message.name)
+          GuiZSetForNextWidget(gui, 2)
+          GuiImageNinePiece(gui, 5, screen_width/2 - width/2, screen_height - dialog_system.dialog_box_y - height - nameplate_height - 3, nameplate_inner_width, nameplate_height)
+          local diff = nameplate_inner_width - name_width + nameplate_padding
+          GuiText(gui, screen_width/2 - width/2 + diff/2, screen_height - dialog_system.dialog_box_y - height - nameplate_height/2 - name_height + nameplate_padding, dialog.message.name)
+        end
       end
       -- Render text
       local y_offset = 0
@@ -141,7 +184,7 @@ dialog_system.open_dialog = function(message)
             GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NoLayouting)
           end
           if char_data.wave then
-            local color = Color:new(math.cos(char_i * 0.14 + GameGetFrameNum() * 0.03) * 360, 0.5, 0.5)
+            local color = Color:new((char_i * 25 + GameGetFrameNum() * 5) % 360, 0.7, 0.6)
             r, g, b = color:get_rgb()
             wave_offset_y = math.sin(char_i * 0.5 + GameGetFrameNum() * 0.1) * 1
           end
@@ -196,7 +239,7 @@ dialog_system.open_dialog = function(message)
       dialog.fade_in_portrait = 32
     end
     while dialog.transition_state < 1 do
-      dialog.transition_state = dialog.transition_state + (1 / 32)
+      dialog.transition_state = dialog.transition_state + (2 / 32)
       wait(0)
     end
     dialog.transition_state = 1
@@ -245,6 +288,8 @@ dialog_system.open_dialog = function(message)
             do_wait = true
           end
           i = i + string.find(str, "}") - 1
+        else
+          error(("Invalid command: %s"):format(command))
         end
       else
         local color_copy = {unpack(color)}
