@@ -1,0 +1,3 @@
+[submodule "lib/DialogSystem"]
+	path = lib/DialogSystem
+	url = https://github.com/TheHorscht/DialogSystem.git
