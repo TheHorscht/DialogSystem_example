@@ -1,3 +1,16 @@
+--[[
+Custom coroutines.lua made by Horscht, inspired by Zatherz
+
+-- TODO: Make asyncs pause- and resumeable from outside?
+
+Changelog:
+v0.1.0:
+- First release
+- "Signal" based functions are unimplemented
+- Errors in async functions will not get swallowed but reported in the logger correctly
+- Coroutines can be stopped (kills the coroutine) and restarted
+]]
+
 local current_time = 0
 
 local last_id = 0
