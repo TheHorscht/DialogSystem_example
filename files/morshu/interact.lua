@@ -1,4 +1,4 @@
-dofile_once("mods/DialogSystem_example/lib/DialogSystem/dialog_system.lua")
+local dialog_system = dofile_once("mods/DialogSystem_example/lib/DialogSystem/dialog_system.lua")
 
 -- Make NPC stop walking while player is close
 local entity_id = GetUpdatedEntityID()
