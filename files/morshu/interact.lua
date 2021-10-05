@@ -13,6 +13,7 @@ end
 
 function interacting(entity_who_interacted, entity_interacted, interactable_name)
   dialog_system.images.ruby = "mods/DialogSystem_example/files/ruby.png" -- This is how you add custom icons to be used by the img command
+  dialog_system.sounds.tick = { bank = "data/audio/Desktop/ui.bank", event = "ui/button_select" } -- This is how you add custom typing sounds
   -- dialog_system.dialog_box_y = 10 -- Optional
   -- dialog_system.dialog_box_width = 300 -- Optional
   -- dialog_system.dialog_box_height = 70 -- Optional
@@ -21,24 +22,41 @@ function interacting(entity_who_interacted, entity_interacted, interactable_name
     name = "Morshu",
     portrait = "mods/DialogSystem_example/files/morshu/portrait.xml",
     animation = "morshu", -- Which animation to use
-    typing_sound = "one", -- There are currently 5: sans, one, two, three, four and "none" to turn it off, if not specified defaults to two
+    typing_sound = "two", -- There are currently 6: default, sans, one, two, three, four and "none" to turn it off, if not specified uses "default"
     text = [[
       Normal text, pause for 60 frames: {@pause 60}{@delay 10}Slow text{@delay 3}{@color FF0000} text color{@color FFFFFF}
       *Blinking text*, #shaking text#, ~rainbow wave text~, ~*#combined#*~
-      You can even use custom icons/images! {@img ruby}{@img ruby}{@img ruby}
+      {@sound tick}You can even use custom icons/images! {@img ruby}{@img ruby}{@img ruby}
       Which also support all modifiers: #{@img ruby}#*{@img ruby}*~{@img ruby}~~*#{@img ruby}#*~
     ]],
     options = {
       {
-        text = "Option one",
+        text = "Buy potion (500 gold)",
+        enabled = function(stats)
+          -- stats is an object that provides convenient access to common values of the player, like gold, hp, max_hp
+          return stats.gold >= 500
+        end,
         func = function(dialog)
           dialog.show({
+            -- Omitted properties will be inherited from the previous dialog
             name = "Noita",
             portrait = "mods/DialogSystem_example/files/wizard_portrait.png",
-            typing_sound = "three",
-            text = "Shut the fuck up Morshu, nobody cares!"
+            text = "One potion please!",
+            options = {
+              {
+                text = "Take potion",
+                func = function(dialog)
+                  -- Spawn a potion and add it to the inventory of the player
+                  local potion = EntityLoad("data/entities/items/pickup/potion.xml")
+                  GamePickUpInventoryItem(entity_who_interacted, potion)
+                  -- And deduct 500 gold
+                  local wallet_component = EntityGetFirstComponentIncludingDisabled(entity_who_interacted, "WalletComponent")
+                  ComponentSetValue2(wallet_component, "money", ComponentGetValue2(wallet_component, "money") - 500)
+                  dialog.close()
+                end
+              }
+            }
           })
-          -- To close the dialog you can also use dialog.close()
         end
       },
       {
