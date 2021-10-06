@@ -1,4 +1,6 @@
 local dialog_system = dofile_once("mods/DialogSystem_example/lib/DialogSystem/dialog_system.lua")
+dialog_system.images.ruby = "mods/DialogSystem_example/files/ruby.png" -- This is how you add custom icons to be used by the img command
+dialog_system.sounds.tick = { bank = "data/audio/Desktop/ui.bank", event = "ui/button_select" } -- This is how you add custom typing sounds
 
 -- Make NPC stop walking while player is close
 local entity_id = GetUpdatedEntityID()
@@ -12,8 +14,6 @@ else
 end
 
 function interacting(entity_who_interacted, entity_interacted, interactable_name)
-  dialog_system.images.ruby = "mods/DialogSystem_example/files/ruby.png" -- This is how you add custom icons to be used by the img command
-  dialog_system.sounds.tick = { bank = "data/audio/Desktop/ui.bank", event = "ui/button_select" } -- This is how you add custom typing sounds
   -- dialog_system.dialog_box_y = 10 -- Optional
   -- dialog_system.dialog_box_width = 300 -- Optional
   -- dialog_system.dialog_box_height = 70 -- Optional
