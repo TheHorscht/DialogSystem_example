@@ -1,0 +1,31 @@
+{
+  "name": "dialogsystem_example",
+  "version": "0.3.1",
+  "description": "",
+  "main": "build.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheHorscht/DialogSystem_example.git"
+  },
+  "author": "TheHorscht <realhorscht+github@gmail.com> (https://github.com/TheHorscht)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TheHorscht/DialogSystem_example/issues"
+  },
+  "homepage": "https://github.com/TheHorscht/DialogSystem_example#readme",
+  "dependencies": {
+    "@octokit/core": "^3.5.1",
+    "adm-zip": "^0.5.9",
+    "axios": "^0.22.0",
+    "dotenv": "^10.0.0",
+    "minimatch": "^3.0.4",
+    "uri-template": "^1.0.1",
+    "xml2js": "^0.4.23"
+  }
+}
