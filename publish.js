@@ -35,8 +35,8 @@ async function readChangeLog() {
 async function upload_release() {
   const folderName = path.basename(__dirname);
   let changes;
-  let version = pjson.version;
-  let changelog = '';
+  let version = `v${pjson.version}`;
+  let changelog = ' ';
   if(fs.existsSync()) {
     changes = await readChangeLog();
     version = changes[0].version;
@@ -52,7 +52,7 @@ async function upload_release() {
     body: changelog,
   });
   assert(result.status == 201);
-  let file = await fs.readFile(path.resolve(__dirname, '/dist/', archiveName));
+  let file = await fs.readFile(path.resolve(__dirname, 'dist/', archiveName));
   let uri = uriTemplate.parse(result.data.upload_url);
   result = await axios.post(uri.expand({ name: archiveName, label: archiveName }), file, {
     headers: {
