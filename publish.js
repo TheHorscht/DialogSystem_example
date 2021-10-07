@@ -36,7 +36,7 @@ async function upload_release() {
   const folderName = path.basename(__dirname);
   let changes;
   let version = `v${pjson.version}`;
-  let changelog = ' ';
+  let changelog = 'New Update';
   if(fs.existsSync()) {
     changes = await readChangeLog();
     version = changes[0].version;

@@ -33,7 +33,10 @@ const ignore_list = [
   'mod_id.txt',
   'compatibility.xml',
   '*.py',
-  '*.json'
+  '*.json',
+  '*.js',
+  '.*',
+  'dist'
 ];
 // Config end
 
