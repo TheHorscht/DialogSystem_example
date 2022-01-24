@@ -5,7 +5,9 @@ dialog_system.sounds.tick = { bank = "data/audio/Desktop/ui.bank", event = "ui/b
 -- Make NPC stop walking while player is close
 local entity_id = GetUpdatedEntityID()
 local x, y = EntityGetTransform(entity_id)
-local player = EntityGetInRadiusWithTag(x, y, 15, "player_unit")[1]
+local interactable_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "InteractableComponent")
+local interactable_comp_radius = ComponentGetValue2(interactable_comp, "radius")
+local player = EntityGetInRadiusWithTag(x, y, interactable_comp_radius, "player_unit")[1]
 local character_platforming_component = EntityGetFirstComponentIncludingDisabled(entity_id, "CharacterPlatformingComponent")
 if player then
   ComponentSetValue2(character_platforming_component, "run_velocity", 0)
